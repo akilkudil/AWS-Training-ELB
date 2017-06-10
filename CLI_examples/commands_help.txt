@@ -1,0 +1,39 @@
+1. Create Load balancer
+
+aws elbv2 create-load-balancer --name my-load-balancer  --subnets subnet-12345678 subnet-23456789 --security-groups sg-12345678
+
+
+Note: Need atleast 2 subnets from 2 different AZ.
+
+Add --scheme internal to create internal load balancer
+
+2. Create Target groups
+
+aws elbv2 create-target-group --name my-targets --protocol HTTP --port 80 --vpc-id vpc-3ac0fb5f
+
+
+3.Register targets with default port (port configured for target group)
+
+aws elbv2 register-targets --target-group-arn targetgroup-arn  --targets Id=i-12345678 Id=i-23456789
+
+4. Register targets with port overrides
+
+aws elbv2 register-targets --target-group-arn targetgroup-arn  --targets Id=i-80c8dd94,Port=80 Id=i-80c8dd94,Port=766
+
+5.Create http Listener (this gets input in loadbalancer and passes it on to ec2 instances in the target group)
+
+aws elbv2 create-listener --load-balancer-arn loadbalancer-arn --protocol HTTP --port 80  --default-actions type=forward,TargetGroupArn=targetgroup-arn
+
+
+6. Create https listener
+
+aws elbv2 create-listener --load-balancer-arn loadbalancer-arn --protocol HTTPS --port 443  --certificates CertificateArn=arn:aws:iam::123456789012:server-certificate/my-server-cert --default-actions Type=forward,TargetGroupArn=targetgroup-arn
+
+
+create certificate in acm (amazon certificate manager) or upload existing certificate using IAM
+
+
+7. create rule
+
+aws elbv2 create-rule --listener-arn arn:aws:elasticloadbalancing:us-west-2:123456789012:listener/app/my-load-balancer/50dc6c495c0c9188/f2f7dc8efc522ab2 --priority 10 --conditions Field=path-pattern,Values='/img/*' --actions Type=forward,TargetGroupArn=arn:aws:elasticloadbalancing:us-west-2:123456789012:targetgroup/my-targets/73e2d6bc24d8a067
+
